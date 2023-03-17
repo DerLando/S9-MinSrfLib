@@ -47,7 +47,7 @@ To connect a hops component to the *hops component server*, you need to point it
 
 ![Connecting the component to the `minimize` endpoint](images/set-hops-endpoint-02.png)
 
-### Run a simulation
+## Simulation component
 
 To run a simulation, the hops component for the `/minimize` endpoint expects 4 inputs:
 
@@ -57,3 +57,35 @@ To run a simulation, the hops component for the `/minimize` endpoint expects 4 i
 - Boundary conditions, the boundary conditions that should act on individual vertices of the mesh. Typically you would at least define a few *vertex anchors* to not have the simulation collapse on itself.
 
 ![A simple minimization simulation](images/simple-minimization-screencap.png)
+
+## Boundary Condition components
+
+In `MinSrfLib`, there are several options to define certain *boundaries* the simulation **must** adhere to:
+
+- Vertex anchors, those anchors will never move during the simulation
+- *Partial* vertex anchors, those anchors constrain their vertices in any combination of global $x$, $y$ and $z$ direction
+- On circle, will constrain the given vertices to a circle boundary
+- On line, will constrain the given vertices to a line **(WIP)**
+
+### Vertex Anchors
+
+wip
+
+### Partial Vertex Anchors
+
+Here users have the opportunity to constrain vertices to any combination of the global coordinate axes. This can be useful to keep vertices on a conceptual grid f.e.
+
+![Comparison, inner vertices free / constrained in x direction](images/vertex-x-constrained.png)
+
+As shown in the above, the first simulation has the inner vertices free, which will typically yield better simulation results, while the second (lower) simulation constrained the inner vertices in one direction, keeping the initial grid the vertices layed on intact in the front view.
+
+![Detailed view of the comparison](images/vertex-x-constrained-detail.png)
+
+### On circle
+
+wip
+
+### On Line
+
+wip
+
