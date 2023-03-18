@@ -2,6 +2,8 @@
 
 A library to minimize to *surface area* of a given triangular mesh.
 
+![Example minimization, animated](images/moneyshot_ani.gif)
+
 ## Installation
 
 This application relies on a few pre-existing libraries that must be present on your current python environment. Please refer to their documentation on how to properly install them:
