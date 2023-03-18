@@ -69,7 +69,17 @@ In `MinSrfLib`, there are several options to define certain *boundaries* the sim
 
 ### Vertex Anchors
 
-wip
+To define vertex anchors, point a hops component to the endpoint `http://localhost:5000/vertex_anchor`. The resulting component exposes 5 inputs:
+
+- Point, the point to constrain
+- Index, the index of the point as a vertex in the mesh to minimize
+- Fix X, if the point can or cannot move in global $X$ direction
+- Fix Y, if the point can or cannot move in global $Y$ direction
+- Fix Z, if the point can or cannot move in global $Z$ direction
+
+The output of the component is a *json* serialized representation of an instance of the `VertexAnchorCondition` class. The `minimize` component expects a list of those class instances in their *json* serialized form.
+
+![A simple, single vertex anchor, fully constrained](images/vertex_anchor.png)
 
 ### Partial Vertex Anchors
 
@@ -77,13 +87,19 @@ Here users have the opportunity to constrain vertices to any combination of the 
 
 ![Comparison, inner vertices free / constrained in x direction](images/vertex-x-constrained.png)
 
-As shown in the above, the first simulation has the inner vertices free, which will typically yield better simulation results, while the second (lower) simulation constrained the inner vertices in one direction, keeping the initial grid the vertices layed on intact in the front view.
-
-![Detailed view of the comparison](images/vertex-x-constrained-detail.png)
+As shown in the example, the first simulation has the inner vertices free, which will typically yield better simulation results, while the second (lower) simulation constrained the inner vertices in one direction, keeping the initial grid the vertices layed on intact in the front view.
 
 ### On circle
 
-wip
+To define a `OnCircle` constraint for a given vertex, point a hops component to the `http://localhost:5000/on_circle_constraint` endpoint. The resulting component exposes 3 inputs:
+
+- Point, the point to constrain
+- Index, the index of the point in the mesh to minimize
+- Circle, the circle to constrain the point t
+
+When minimizing, it is guaranteed that the vertices will respect the circle boundary on which they can travel. Thus this constraint is a bit softer than the `VertexAnchor`, while still ensuring vertices to stay on a given boundary. The output of the component is a *json* serialized instance of the `OnCircleBoundaryCondition` class.
+
+![A simple, single vertex constrained to be on a circle](images/on_circle_component.png)
 
 ### On Line
 
