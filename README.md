@@ -6,6 +6,8 @@ A library to minimize to *surface area* of a given triangular mesh.
 
 ![Example minimization, end frame](images/smoothed_end_frame.png)
 
+![Example minimization, circles](images/otto_circles.png)
+
 ## Installation
 
 This application relies on a few pre-existing libraries that must be present on your current python environment. Please refer to their documentation on how to properly install them:

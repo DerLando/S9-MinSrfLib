@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 import rhinoinside
 import conversion
 from geometry import mesh_area, point
@@ -31,10 +32,14 @@ hops = hs.Hops(app=rhinoinside)
         hs.HopsInteger("Max Iterations", "I", "Optional upper limit on iteration count", optional=True, default=-1),
         hs.HopsString("Boundary conditions", "B", "List of vertex boundary conditions to enforce", access=hs.HopsParamAccess.LIST, optional=True, default=None),
     ],
-    outputs=[hs.HopsMesh("Mesh", "M", "The minimized mesh")],
+    outputs=[
+        hs.HopsMesh("Mesh", "M", "The minimized mesh"),
+        hs.HopsNumber("Areas", "A", "The areas at every iteration step", hs.HopsParamAccess.LIST)],
 )
 def minimize(mesh, tol, iterations, boundary_conditions):
     # TODO: Make anchor indices an input
+
+    start = time.time()
 
     if iterations == -1:
         iterations = None
@@ -64,11 +69,17 @@ def minimize(mesh, tol, iterations, boundary_conditions):
     # print("Mesh area is: ")
     # print(mesh_area(vertices, faces))
 
-    optimized = algorithms.minimize_mesh(vertices, faces, connectivity, tol, iterations, boundary_conditions)
+    optimized, areas = algorithms.minimize_mesh(vertices, faces, connectivity, tol, iterations, boundary_conditions)
 
     converted = conversion.convert_to_mesh(optimized, faces)
 
-    return converted
+    end = time.time()
+
+    print(f"Minimization took {end - start}ms")
+
+    # print(areas)
+
+    return (converted, areas)
 
 @hops.component(
     "/vertex_anchor",

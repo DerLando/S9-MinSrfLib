@@ -161,6 +161,10 @@ def minimize_mesh(
     constrained_indices = [i for i in boundary_conditions]
     change_base_indices = [i for i in boundary_conditions if any([type(condition) == OnCircleBoundaryCondition for condition in boundary_conditions[i]])]
 
+    old_area = mesh_area(old_vertices, faces)
+
+    areas = [float(old_area)]
+
     for iter in range(max_iterations):
 
         # iterate over all vertices
@@ -219,17 +223,19 @@ def minimize_mesh(
             new_vertices[i] = p_new
 
         # calc the triangle area
-        old_area = mesh_area(old_vertices, faces)
         new_area = mesh_area(new_vertices, faces)
-        if np.abs(old_area - new_area) <= tolerance:
-            print(f"Early exit after {iter} iterations. Area difference was {old_area - new_area}")
-            return new_vertices
+        areas.append(float(new_area))
+        # if np.abs(old_area - new_area) <= tolerance:
+        #     print(f"Early exit after {iter} iterations. Area difference was {old_area - new_area}, with total area of {new_area}")
+        #     return new_vertices
+        
+        old_area = new_area
 
         # swap the buffers and run next loop
         (old_vertices, new_vertices) = (new_vertices, old_vertices)
 
-        print(f"Finished iteration {iter}")
+        print(f"Finished iteration {iter}, total area is {new_area}")
 
-    return old_vertices
+    return old_vertices, areas
 
 
