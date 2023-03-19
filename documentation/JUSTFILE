@@ -1,0 +1,8 @@
+# use PowerShell instead of sh:
+set shell := ["powershell.exe", "-c"]
+
+convert-default: (convert-doc "paper.md" "paper.pdf")
+
+convert-doc INNAME OUTNAME:
+    pandoc -H header.tex {{INNAME}} -o {{OUTNAME}} --toc --highlight-style kate.theme --pdf-engine=xelatex --metadata-file=meta.yaml --resource-path=resources
+    start {{OUTNAME}}
