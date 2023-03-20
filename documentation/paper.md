@@ -1,5 +1,8 @@
 # Introduction
 
+> The story of soap bubbles in mathematics, science, architecture and art is a never-ending story.
+> &mdash; *Michele Emmer*
+
 In the module *S9 - Computational optimization* we take a deeper look at the theory behind minimal surfaces and will develop a simple *polygon mesh based* solver integrated into the *Rhinoceros* and *Grasshopper* software package. This solver will be able to process arbitrary three dimensional polygon meshed, as long as they are triangular and have only **unique** vertices. The solver also gives users the opportunity to define certain *boundary conditions* for any given vertex of the input mesh. Those conditions will modify how the optimization is run and thus yield different results.
 
 ![A simple example of running the solver in grasshopper](resources/simple-minimization-screencap.png)
@@ -58,7 +61,7 @@ def minimize_mesh(
     so that the total area of the mesh is minimal.
     """
 
-    #code omitted
+    # code omitted
 
 ```
 
@@ -142,8 +145,9 @@ def minimize(mesh, tol, iterations, boundary_conditions):
 
     # Return back result
     return (converted, areas)
-
 ```
+
+
 
 # Minimization algorithm
 
@@ -176,9 +180,78 @@ As we can see, this is not an *explicit* solution for $P_h'$, but we can iterati
 
 ## Boundary conditions
 
+We allow multiple boundary conditions to be defined for a minimization simulation. 
+
+- `Vertex anchor` allows to limit a vertex in any combination of it's degrees of freedom in the world $x$, $y$ and $z$ directions.
+- `On circle` allows to limit a vertex to move along the perimeter of a given circle
+
 ### Vertex anchor
 
+By limiting vertices in their degrees of freedom, interesting behaviors can emerge. For the simulation to be stable, it is necessary that at least one closed loop of vertices is defined for the mesh on which all the vertices are fully constrained. Since this case is quite common, we have a separate helper function just for checking it
+
+``` python
+# Defined in VertexAnchorCondition
+def is_fully_constrained(self) -> bool:
+    """
+    Check to see if the anchor point is fully constrained,
+    meaning it can not move at all.
+    """
+    return self.x_locked and self.y_locked and self.z_locked
+```
+
+When we encounter a fully constrained vertex in the simulation, it is simply skipped, meaning we don't need to do any math on it
+
+```python
+# This happens inside of the main solve loop of the minimize function
+if any([condition.is_fully_constrained() for condition in boundary_conditions[i]]):
+    new_vertices[i] = vertex
+    continue
+```
+
+Alternatively if the vertex is constrained in any combination of degrees of freedom, we can simply manipulate the matrix constant we use to calculate $C$, from an identity matrix to setting the values on the diagonal to 0, which correspond to the constrained dimensions. So for example, for a vertex that is constrained in both $x$ and $z$ direction, our $C$ would be calculated like this
+
+$$C_{xz} = \sum\limits_{t=<h,j,k>\in NT(h)} \frac{(P_j P_k)^2\begin{bmatrix}
+0 & 0 & 0 \\
+0 & 1 & 0 \\
+0 & 0 & 0 \end{bmatrix} - (P_j P_k)(P_j P_k)^T}{\sqrt{P_j P_k \times P_j P_h}^2} $$
+
 ### On circle
+
+An alternative approach to limiting vertices in their movement towards coordinate axes, is to limit them rather to a concrete, mathematically representable curve, in this case the circle. Let $O_c$ be the center of the circle and let $N_c$ be the normal vector of the circle. We see then that the local circle plane for our vertex $P_h$ is defined as
+
+$$r = O_c + t O_c P_h + s (O_c P_h \times N_c)$$
+
+We check every mesh face, if one of it's vertices lies on the circle, and remap it's vertices $P_h$, $P_j$ and $P_k$ into the circle coordinate system, where $P_h$ lies in the circle boundary, $N_c$ is the normal of the circle,  and $O_c$ the center point of the circle. This gives us the remapped vertices $p_h$, $p_j$ and $p_k$
+
+![An example of the vertex $P_h$ lying on a circle boundary, it's other face vertices being unbound](resources/oncircle_diagram.png)
+
+Given another *unique* point on the circle perimeter, $X$ which must not lie on the line going through the points $O_c$ and $P_h$,we can calculate a transformation matrix $M_{loc}$, to remap from gobal coordinates to *circle-local* coordinates. Let $\vec{p} = P_h - O_c$ and let $\vec{x} = X - O_c$. We can remap those vectors to the *circle-local* plane by reducing them to their distance to the circle center $O_c$, which yields $\vec{p}'$ and $\vec{x}'$ respectively. It then follows for the transformation matrix from global to local coordinated $M_{g\rightarrow l}$
+
+$$M_{g\rightarrow l} = \begin{bmatrix}
+\vec{p}'_x & \vec{x}'_x & N'_x & 0 \\
+\vec{p}'_y & \vec{x}'_y & N'_y & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1\end{bmatrix}$$
+
+To convert a point given in *circle-local* coordinates back to the global coordinate system, we can use the transformation matrix $M_{l\rightarrow g}$:
+
+$$M_{l\rightarrow g} = \begin{bmatrix}
+\vec{p}_x & \vec{x}_x & N_x & \vec{c}_x \\
+\vec{p}_y & \vec{x}_y & N_y & \vec{c}_y \\
+\vec{p}_z & \vec{x}_z & N_z & \vec{c}_z \\
+0 & 0 & 0 & 1\end{bmatrix}$$
+
+When calculating the area minimized position $P_h'$ for vertex $P_h$, we can then calculate first in the *circle-local* coordinate system, allowing us to include the circle equation into the minimization to enforce that the resulting point $p_h'$ lies on the circle boundary. Afterwards we remap back to the *global* coordinate system to get $P_h'$. We modify the [[Area Minimization]] formula, to account for valid positions on the circle. Since we chose the local plane to have it's origin point at the circle origin $O_c$, we can use the simplified circle equation
+
+$$(x_{p_h'})^2 + (y_{p_h'})^2 = r^2 \Rightarrow ||p_h'|| = r $$
+
+which gives us 2 invariants that must hold for $p_h'$: It's norm **must** be equal to the radius $r$ of the circle and it's local z-coordinate **must** be 0. Using those constraints for our minimization function, we get
+
+$$p_h' = \begin{bmatrix}
+1 & 0 & 0 \\
+0 & 1 & 0 \\
+0 & 0 & 0 \end{bmatrix}
+ -C^{-1} \sum\limits_{t=<h,j,k>\in NT(h)} \frac{(p_j p_k \cdot p_j)p_j p_k - (p_j p_k)^2 p_j}{\sqrt{p_j p_k \times p_j p_h}^2} * \frac{r}{||p_h||}$$
 
 # Tests
 
@@ -246,7 +319,7 @@ We ran the solver on the different subdivision levels and got some unexpected re
         \label{fig:6 Test cases for the triangle prism test}
 \end{figure}
 
-After some more tests it became clear, that meshes with more vertices take more iterations to get to the same area as meshes with less vertices. So we ran the test again, with roughly 1000 iterations for all subdivisions, which equals roughly 3 times the iteration count of the hightest subdivision level of the last run.
+After some more tests it became clear, that meshes with more vertices take more iterations to get to the same area as meshes with less vertices. So we ran the test again, with 1000 iterations for all subdivisions, which equals roughly 3 times the iteration count of the hightest subdivision level of the last run.
 
 |Vertex count|Iterations|Runtime [s]|Area    |Min curvature|Max curvature|Average curvature|
 |------------|----------|-----------|--------|-------------|-------------|-----------------|
