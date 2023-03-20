@@ -255,6 +255,33 @@ $$p_h' = \begin{bmatrix}
 
 # Tests
 
+Through the grasshopper interface it is quite simple and quick to feed the solver all kinds of example cases. In the following we want to go a bit deeper into the quality of the solutions, as well as the stability and the runtime metrics of the solver. For this we closely evaluate chosen test cases towards multiple relevant data points.
+
+\begin{figure}
+     \centering
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{resources/Cube.png}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{resources/Star.png}
+     \end{subfigure}
+        \centering
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{resources/Circles.png}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{resources/loft_04.png}
+     \end{subfigure}
+        \caption{Some example meshes generated from the solver}
+        \label{fig:Some example meshes generated from the solver}
+\end{figure}
+
 ## Triangle Prism
 
 For this test, we have a simple setup of a triangle boundary, similar to experiments done by *Frei Otto*.
